@@ -1,1 +1,170 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👑 Golden Queen - بوابة الربط</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --gold: #d4a055;
+            --dark-bg: #0f0f0f;
+            --card-bg: #1a1a1a;
+            --text: #ffffff;
+            --muted: #a0a0a0;
+        }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .langOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .langBox {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid var(--gold);
+        }
+        .lang-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .langBtn {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .langBtn:hover { background: var(--gold); color: black; }
+        
+        .mainBody { display: none; width: 100%; max-width: 400px; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .accent { color: var(--gold); }
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+        .input-wrap {
+            display: flex;
+            align-items: center;
+            background: #222;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        input {
+            background: transparent;
+            border: none;
+            color: white;
+            width: 100%;
+            outline: none;
+            font-size: 16px;
+        }
+        .submitBtn {
+            width: 100%;
+            padding: 15px;
+            background: var(--gold);
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .qr-frame {
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 20px auto;
+            width: 200px; height: 200px;
+            display: flex; justify-content: center; align-items: center;
+        }
+        #qrImage { width: 100%; display: none; }
+        .tab-switcher {
+            display: flex;
+            background: #222;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1; padding: 10px; border: none; background: transparent;
+            color: white; cursor: pointer;
+        }
+        .tab-btn.active { background: var(--gold); border-radius: 10px; color: black; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
 
+<div id="langOverlay" class="langOverlay">
+    <div class="langBox">
+        <h2>👑 Welcome</h2>
+        <div class="lang-grid">
+            <button class="langBtn" onclick="initPage('ar')">العربية</button>
+            <button class="langBtn" onclick="initPage('en')">English</button>
+        </div>
+    </div>
+</div>
+
+<div id="mainBody" class="mainBody">
+    <header class="header">
+        <h1><span class="accent">Golden Queen</span> Bot</h1>
+        <p id="headerSub">Link your WhatsApp device</p>
+    </header>
+
+    <div class="tab-switcher">
+        <button class="tab-btn active" id="tabPairing" onclick="switchTab('pairing')">Pairing Code</button>
+        <button class="tab-btn" id="tabQr" onclick="switchTab('qr')">QR Code</button>
+    </div>
+
+    <div id="panelPairing" class="tab-panel">
+        <div class="card">
+            <h3 id="loginHeader">Connection</h3>
+            <p id="loginSubText" style="font-size: 12px; color: var(--muted);"></p>
+            <div class="inputGroup">
+                <label id="numLabel">WhatsApp Number</label>
+                <div class="input-wrap">
+                    <span>📞</span>
+                    <input type="text" id="phoneNum" placeholder="9677xxxxxxxx">
+                </div>
+            </div>
+        </div>
+        <button class="submitBtn" id="submitBtn" onclick="handleSubmit()">Link Device</button>
+        <p id="noticeText" style="font-size: 11px; margin-top: 15px; color: var(--gold); text-align: center;"></p>
+    </div>
+
+    <div id="panelQr" class="tab-panel hidden">
+        <div class="card" style="text-align: center;">
+            <h3 id="qrHeader">QR Code</h3>
+            <div class="qr-frame">
+                <div id="qrPlaceholder" onclick="loadQr()" style="color: black; cursor: pointer;">Tap to Load</div>
+                <img id="qrImage" src="" alt="QR">
+            </div>
+            <p id="qrStatus" style="font-size: 12px;"></p>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
