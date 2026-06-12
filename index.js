@@ -1,5 +1,81 @@
  const { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, Browsers, DisconnectReason, delay, downloadContentFromMessage } = require('@whiskeysockets/baileys');
-const { sendRobustStatusReaction } = require('./statusHelper');
+const { sendRobustStatusReaction } = (() => {
+    try {
+        return require('./statusHelper');
+    } catch (_) {
+        const normalizeWhatsAppJid = (value) => String(value || '').trim().replace(/:[0-9]+(?=@)/, '');
+        const pushUnique = (list, value) => {
+            const normalized = normalizeWhatsAppJid(value);
+            if (normalized && !list.includes(normalized)) list.push(normalized);
+        };
+        const collectParticipantCandidates = (msg, explicitCandidates = []) => {
+            const list = [];
+            for (const candidate of explicitCandidates) pushUnique(list, candidate);
+            pushUnique(list, msg?.participant);
+            pushUnique(list, msg?.key?.participant);
+            pushUnique(list, msg?.key?.remoteJid && msg?.key?.remoteJid !== 'status@broadcast' ? msg.key.remoteJid : '');
+            const content = msg?.message || {};
+            pushUnique(list, content?.reactionMessage?.key?.participant);
+            pushUnique(list, content?.protocolMessage?.key?.participant);
+            pushUnique(list, content?.extendedTextMessage?.contextInfo?.participant);
+            pushUnique(list, content?.imageMessage?.contextInfo?.participant);
+            pushUnique(list, content?.videoMessage?.contextInfo?.participant);
+            return list;
+        };
+        const extractStatusMessageId = (msg) => (
+            msg?.key?.id ||
+            msg?.message?.reactionMessage?.key?.id ||
+            msg?.message?.protocolMessage?.key?.id ||
+            msg?.message?.extendedTextMessage?.contextInfo?.stanzaId ||
+            msg?.message?.imageMessage?.contextInfo?.stanzaId ||
+            msg?.message?.videoMessage?.contextInfo?.stanzaId ||
+            ''
+        );
+        const buildReactionKeys = (messageId, participant) => {
+            if (!messageId || !participant) return [];
+            return [
+                { remoteJid: 'status@broadcast', id: messageId, participant, fromMe: false },
+                { remoteJid: 'status@broadcast', id: messageId, participant, fromMe: false, statusJidList: [participant] },
+                { id: messageId, remoteJid: 'status@broadcast', participant }
+            ];
+        };
+        const sendAttempt = async (sock, emoji, key, participant, delayFn, includeStatusList) => {
+            if (typeof delayFn === 'function') await delayFn(120);
+            const options = includeStatusList ? { statusJidList: [participant] } : undefined;
+            await sock.sendMessage('status@broadcast', { react: { text: emoji || '❤️', key } }, options);
+        };
+        return {
+            sendRobustStatusReaction: async ({ sock, msg, emoji = '❤️', candidates = [], delayFn } = {}) => {
+                if (!sock || !msg) return false;
+                const messageId = extractStatusMessageId(msg);
+                if (!messageId) return false;
+                const participantCandidates = collectParticipantCandidates(msg, candidates);
+                if (!participantCandidates.length) return false;
+                let lastError = null;
+                for (const participant of participantCandidates) {
+                    for (const key of buildReactionKeys(messageId, participant)) {
+                        try {
+                            await sendAttempt(sock, emoji, key, participant, delayFn, true);
+                            return true;
+                        } catch (error) {
+                            lastError = error;
+                        }
+                        try {
+                            await sendAttempt(sock, emoji, key, participant, delayFn, false);
+                            return true;
+                        } catch (error) {
+                            lastError = error;
+                        }
+                    }
+                }
+                if (lastError) {
+                    console.error('Status reaction helper warning:', lastError?.message || lastError);
+                }
+                return false;
+            }
+        };
+    }
+})();
 const { Telegraf, session, Markup } = require('telegraf');
 const pino = require('pino');
 const express = require('express');
