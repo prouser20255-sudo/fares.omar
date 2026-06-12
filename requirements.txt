@@ -1,2 +1,3 @@
-python-telegram-bot==20.8
-requests==2.31.0
+# Disabled intentionally.
+# This project runs on Node.js via package.json / nixpacks.toml.
+# Keeping Python requirements here caused Railway to detect the wrong runtime.
